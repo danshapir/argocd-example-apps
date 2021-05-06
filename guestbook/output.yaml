@@ -1,0 +1,62 @@
+---
+global:
+  elasticsearch:
+    disableExporter: true
+hazelcast:
+  cluster:
+    memberCount: 1
+  enabled: true
+simple-monitor:
+  hazelcast: '{{ .Release.Name }}-hazelcast:5701'
+  postgres:
+    host: psql-postgresql
+    password: z6X0nnddgy
+    port: 5432
+    username: postgres
+zeebe-cluster-helm:
+  clusterSize: 1
+  elasticsearch:
+    antiAffinity: soft
+    clusterHealthCheckParams: wait_for_status=yellow&timeout=1s
+    enabled: false
+    esJavaOpts: -Xmx128m -Xms128m
+    imageTag: 6.8.5
+    minimumMasterNodes: 1
+    replicas: 1
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1024M
+      requests:
+        cpu: 100m
+        memory: 512M
+    volumeClaimTemplate:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 300M
+  env:
+  - name: ZEEBE_BROKER_EXPORTERS_HAZELCAST_JARPATH
+    value: exporters/zeebe-hazelcast-exporter.jar
+  - name: ZEEBE_BROKER_EXPORTERS_HAZELCAST_CLASSNAME
+    value: io.zeebe.hazelcast.exporter.HazelcastExporter
+  envTemplated:
+    ZEEBE_HAZELCAST_REMOTE_ADDRESS: '{{ .Release.Name }}-hazelcast'
+  extraInitContainers: "- name: init-exporters-hazelcast\n  image: busybox:1.28\n\
+    \  command: ['/bin/sh', '-c']\n  args: ['wget --no-check-certificate https://repo1.maven.org/maven2/io/zeebe/hazelcast/zeebe-hazelcast-exporter/0.10.0/zeebe-hazelcast-exporter-0.10.0-jar-with-dependencies.jar\
+    \ -O /exporters/zeebe-hazelcast-exporter.jar; ls -al']\n  volumeMounts:\n  - name:\
+    \ exporters\n    mountPath: /exporters/\n"
+  gatewayMetrics: true
+  image:
+    pullPolicy: IfNotPresent
+    repository: camunda/zeebe
+    tag: 25.2.3
+  kibana:
+    enabled: false
+  partitionCount: 1
+  prometheus:
+    enabled: false
+    servicemonitor:
+      enabled: true
+  replicationFactor: 1
