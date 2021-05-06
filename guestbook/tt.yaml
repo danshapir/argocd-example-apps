@@ -2,6 +2,8 @@ global:
   elasticsearch:
     disableExporter: true
     
+
+    
 # zeebe-full-helm:
 zeebe-cluster-helm:
   clusterSize: 1
