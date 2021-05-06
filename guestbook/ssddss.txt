@@ -1,0 +1,1 @@
+kubectl patch --local=true  -f guestbook-ui-deployment.yaml -p '{"spec":{"template":{"spec":{"containers":[{"name":"guestbook-ui","image":"mycompany/guestssssbook:v2.0"}]}}}}' -o yaml
