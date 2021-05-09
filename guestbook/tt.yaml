@@ -1,108 +1,62 @@
+---
 global:
   elasticsearch:
     disableExporter: true
-    
-
-    
-# zeebe-full-helm:
+hazelcast:
+  cluster:
+    memberCount: 1
+  enabled: true
+simple-monitor:
+  hazelcast: '{{ .Release.Name }}-hazelcast:5701'
+  postgres:
+    host: psql-postgresql
+    password: z6X0nnddgy
+    port: 5432
+    username: postgres
 zeebe-cluster-helm:
   clusterSize: 1
-  partitionCount: 1
-  replicationFactor: 1
-  gatewayMetrics: true
-  extraInitContainers: |
-    - name: init-exporters-hazelcast
-      image: busybox:1.28
-      command: ['/bin/sh', '-c']
-      args: ['wget --no-check-certificate https://repo1.maven.org/maven2/io/zeebe/hazelcast/zeebe-hazelcast-exporter/0.10.0/zeebe-hazelcast-exporter-0.10.0-jar-with-dependencies.jar -O /exporters/zeebe-hazelcast-exporter.jar; ls -al']
-      volumeMounts:
-      - name: exporters
-        mountPath: /exporters/
-  env:
-    - name: ZEEBE_BROKER_EXPORTERS_HAZELCAST_JARPATH
-      value: exporters/zeebe-hazelcast-exporter.jar
-    - name: ZEEBE_BROKER_EXPORTERS_HAZELCAST_CLASSNAME
-      value: io.zeebe.hazelcast.exporter.HazelcastExporter
-    
-  envTemplated: 
-    ZEEBE_HAZELCAST_REMOTE_ADDRESS: "{{ .Release.Name }}-hazelcast"
-  image:
-    repository: camunda/zeebe
-    tag: 0.26.3
-    pullPolicy: IfNotPresent
-
   elasticsearch:
+    antiAffinity: soft
+    clusterHealthCheckParams: wait_for_status=yellow&timeout=1s
     enabled: false
-    imageTag: 6.8.5 
-    replicas: 1
+    esJavaOpts: -Xmx128m -Xms128m
+    imageTag: 6.8.5
     minimumMasterNodes: 1
-    # Permit co-located instances for solitary minikube virtual machines.
-    antiAffinity: "soft"
-    # labels: 
-    #   app: zeebe
-    #   release: metrics
-    # gateway:
-    #   labels:
-    #     release: zb-local
-    # Allow no backup for single node setups
-    clusterHealthCheckParams: "wait_for_status=yellow&timeout=1s"
-
-    # Shrink default JVM heap.
-    esJavaOpts: "-Xmx128m -Xms128m"
-
-    # Allocate smaller chunks of memory per pod.
+    replicas: 1
     resources:
-      requests:
-        cpu: "100m"
-        memory: "512M"
       limits:
-        cpu: "1000m"
-        memory: "1024M"
-
-    # Request smaller persistent volumes.
+        cpu: 1000m
+        memory: 1024M
+      requests:
+        cpu: 100m
+        memory: 512M
     volumeClaimTemplate:
-      accessModes: [ "ReadWriteOnce" ]
+      accessModes:
+      - ReadWriteOnce
       resources:
         requests:
           storage: 300M
-
-  # KIBANA
+  env:
+  - name: ZEEBE_BROKER_EXPORTERS_HAZELCAST_JARPATH
+    value: exporters/zeebe-hazelcast-exporter.jar
+  - name: ZEEBE_BROKER_EXPORTERS_HAZELCAST_CLASSNAME
+    value: io.zeebe.hazelcast.exporter.HazelcastExporter
+  envTemplated:
+    ZEEBE_HAZELCAST_REMOTE_ADDRESS: '{{ .Release.Name }}-hazelcast'
+  extraInitContainers: "- name: init-exporters-hazelcast\n  image: busybox:1.28\n\
+    \  command: ['/bin/sh', '-c']\n  args: ['wget --no-check-certificate https://repo1.maven.org/maven2/io/zeebe/hazelcast/zeebe-hazelcast-exporter/0.10.0/zeebe-hazelcast-exporter-0.10.0-jar-with-dependencies.jar\
+    \ -O /exporters/zeebe-hazelcast-exporter.jar; ls -al']\n  volumeMounts:\n  - name:\
+    \ exporters\n    mountPath: /exporters/\n"
+  gatewayMetrics: true
+  image:
+    pullPolicy: IfNotPresent
+    repository: camunda/zeebe
+    tag: 27.2.2
   kibana:
     enabled: false
-
-  # PROMETHEUS
+  partitionCount: 1
   prometheus:
     enabled: false
-
     servicemonitor:
       enabled: true
-
-  # zeebe-operate-helm:
-  #   image:
-  #     tag: 0.26.1
-  #   enabled: false
-
-  # zeebe-tasklist-helm:
-  #   enabled: false
-    
-  # zeeqs:
-  #   enabled: false
-
-  # zeebe-zeeqs-helm: 
-  #   enabled: false
-  #   hazelcast:
-  #     cluster:
-  #       memberCount: 1
-
-hazelcast:
-  enabled: true
-  cluster:
-    memberCount: 1
-
-simple-monitor:
-  postgres:
-    host: "psql-postgresql"
-    port: 5432
-    username: "postgres"
-    password: "z6X0nnddgy"
-  hazelcast: "{{ .Release.Name }}-hazelcast:5701"
+  replicationFactor: 1
