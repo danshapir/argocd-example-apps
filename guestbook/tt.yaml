@@ -51,7 +51,7 @@ zeebe-cluster-helm:
   image:
     pullPolicy: IfNotPresent
     repository: camunda/zeebe
-    tag: 72ae2867eff2749c644ba292c4c01a17781266c4
+    tag: f3eef272b92e7984051f96fda2f0eec360e3940f
   kibana:
     enabled: false
   partitionCount: 1
